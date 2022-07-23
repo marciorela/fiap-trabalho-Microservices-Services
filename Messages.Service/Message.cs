@@ -38,14 +38,9 @@ namespace Messages.Service
 
         virtual protected void Configure()
         {
-
         }
 
-        virtual public void Process(MessageData received)
-        {
-        }
-
-        public async Task Send(IMessage message)
+        public async Task Send(object message)
         {
             var s_sender = s_client.CreateSender(_topicName);
 

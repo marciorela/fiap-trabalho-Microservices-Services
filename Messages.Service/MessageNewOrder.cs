@@ -1,5 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus.Administration;
 using Geekburger.Order.Contract.Messages;
+using Geekburger.Order.Data.Repositories;
+using GeekBurguer.UI.Contract;
 using Messages.Service.Models;
 using Newtonsoft.Json;
 using System;
@@ -19,20 +21,6 @@ namespace Messages.Service
         protected override void Configure()
         {
             _topicName = "NewOrder";
-        }
-
-        public override void Process(MessageData received)
-        {
-            Console.WriteLine("Recebido:");
-            Console.WriteLine(received.MessageId.ToString());
-
-            var x = Encoding.UTF8.GetString(received.Body);
-            var y = JsonConvert.DeserializeObject<OrderChanged>(x);
-
-            Console.WriteLine(y.OrderId);
-            Console.WriteLine(y.State);
-            Console.WriteLine(y.StoreName);
-            Console.WriteLine(SubscriptionName);
         }
     }
 }
