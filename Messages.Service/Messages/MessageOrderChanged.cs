@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Messages.Service
+namespace Messages.Service.Messages
 {
     public class MessageOrderChanged : Message
     {

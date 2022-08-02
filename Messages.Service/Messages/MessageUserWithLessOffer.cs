@@ -10,17 +10,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Messages.Service
+namespace Messages.Service.Messages
 {
-    public class MessageNewOrder : Message
+    public class MessageUserWithLessOffer : Message
     {
-        public MessageNewOrder(string storeName) : base(storeName)
+        public MessageUserWithLessOffer(string storeName) : base(storeName)
         {
         }
 
         protected override void Configure()
         {
-            _topicName = "NewOrder";
+            _topicName = "UserWithLessOffer";
         }
     }
 }

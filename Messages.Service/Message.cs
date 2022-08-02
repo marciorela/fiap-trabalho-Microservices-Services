@@ -11,13 +11,13 @@ namespace Messages.Service
     {
         private ServiceBusClient s_client;
         private ServiceBusAdministrationClient s_adminClient;
-        protected readonly string SubscriptionName = ""; // = "paulista_store";
+        protected readonly string _subscriptionName = "";
         protected string _topicName = "";
         protected CreateRuleOptions _rule = new();
 
-        public Message(string storeName)
+        public Message(string subscriptionName)
         {
-            SubscriptionName = storeName;
+            _subscriptionName = subscriptionName;
 
             var config = new ConfigurationBuilder()
               .SetBasePath(Directory.GetCurrentDirectory())
@@ -32,8 +32,8 @@ namespace Messages.Service
             Configure();
 
             Task.Run(async () => await CreateTopic(_topicName)).Wait();
-            Task.Run(async () => await CreateSubscription(_topicName, SubscriptionName)).Wait();
-            Task.Run(async () => await CreateRules(_topicName, SubscriptionName)).Wait();
+            Task.Run(async () => await CreateSubscription(_topicName, _subscriptionName)).Wait();
+            //Task.Run(async () => await CreateRules(_topicName, SubscriptionName)).Wait();
         }
 
         virtual protected void Configure()
@@ -53,7 +53,7 @@ namespace Messages.Service
                 {
                     Body = new BinaryData(bodyByteArray),
                     MessageId = Guid.NewGuid().ToString(),
-                    Subject = SubscriptionName
+                    Subject = _subscriptionName
                 };
                 
                 await s_sender.SendMessageAsync(msg);
@@ -66,7 +66,7 @@ namespace Messages.Service
 
         public async Task<MessageData?> Receive()
         {
-            await using ServiceBusReceiver s_receiver = s_client.CreateReceiver(_topicName, SubscriptionName,
+            await using ServiceBusReceiver s_receiver = s_client.CreateReceiver(_topicName, _subscriptionName,
                 new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
 
             try
@@ -110,7 +110,7 @@ namespace Messages.Service
 
             if (!found)
             {
-                await s_adminClient.CreateRuleAsync(_topicName, SubscriptionName, new CreateRuleOptions("filter-store", new CorrelationRuleFilter() { Subject = SubscriptionName }));
+                await s_adminClient.CreateRuleAsync(_topicName, _subscriptionName, new CreateRuleOptions("filter-store", new CorrelationRuleFilter() { Subject = _subscriptionName }));
             }
         }
 
