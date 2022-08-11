@@ -14,9 +14,6 @@ namespace Messages.Service.Messages
 {
     public class MessageUserWithLessOffer : Message
     {
-        public MessageUserWithLessOffer(string storeName) : base(storeName)
-        {
-        }
 
         protected override void Configure()
         {

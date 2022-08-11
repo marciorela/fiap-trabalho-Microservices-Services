@@ -11,18 +11,19 @@ namespace Messages.Service
     {
         private ServiceBusClient s_client;
         private ServiceBusAdministrationClient s_adminClient;
+        private ServiceBusProcessor? processor;
         protected readonly string _subscriptionName = "";
         protected string _topicName = "";
         protected CreateRuleOptions _rule = new();
 
-        public Message(string subscriptionName)
+        public Message()
         {
-            _subscriptionName = subscriptionName;
-
             var config = new ConfigurationBuilder()
               .SetBasePath(Directory.GetCurrentDirectory())
               .AddJsonFile("appsettings.json")
               .Build();
+
+            _subscriptionName = config.GetValue<string>("SubscriptionName");
 
             var connection = config.GetConnectionString("ServiceBus");
 
@@ -64,30 +65,44 @@ namespace Messages.Service
             }
         }
 
-        public async Task<MessageData?> Receive()
+        static async Task MessageHandler(ProcessMessageEventArgs args)
         {
-            await using ServiceBusReceiver s_receiver = s_client.CreateReceiver(_topicName, _subscriptionName,
-                new ServiceBusReceiverOptions { ReceiveMode = ServiceBusReceiveMode.ReceiveAndDelete });
+            string body = args.Message.Body.ToString();
+            Console.WriteLine($"Received: {body}");
+            await args.CompleteMessageAsync(args.Message);
+        }
+        static Task ErrorHandler(ProcessErrorEventArgs args)
+        {
+            Console.WriteLine(args.Exception.ToString());
+            return Task.CompletedTask;
+        }
 
-            try
+        public async Task Processa(MessageData msg)
+        {
+            await Receive(Processa);
+        }
+
+        public async Task Receive(Func<MessageData, Task> processMessage)
+        {
+            processor = s_client.CreateProcessor(_topicName, _subscriptionName);
+
+            processor.ProcessMessageAsync += async (args) =>
             {
-                var receivedMessage = await s_receiver.ReceiveMessageAsync(TimeSpan.FromSeconds(1));
-                if (receivedMessage != null)
+                var data = new MessageData()
                 {
-                    return new MessageData()
-                    {
-                        MessageId = Guid.Parse(receivedMessage.MessageId),
-                        CorrelationId = (!string.IsNullOrWhiteSpace(receivedMessage.CorrelationId) ? Guid.Parse(receivedMessage.CorrelationId) : null),
-                        Body = receivedMessage.Body
-                    };
-                }
+                    MessageId = Guid.Parse(args.Message.MessageId),
+                    CorrelationId = (!string.IsNullOrWhiteSpace(args.Message.CorrelationId) ? Guid.Parse(args.Message.CorrelationId) : null),
+                    Body = args.Message.Body
+                };
 
-                return null;
-            }
-            finally
-            {
-                await s_receiver.CloseAsync();
-            }
+                await processMessage(data);
+
+                await args.CompleteMessageAsync(args.Message);
+            };
+
+            processor.ProcessErrorAsync += ErrorHandler;
+        
+            await processor.StartProcessingAsync();
         }
 
         private async Task CreateRules(string topicName, string subscriptionName)
@@ -155,6 +170,10 @@ namespace Messages.Service
         public async void Dispose()
         {
             await s_client.DisposeAsync();
+            if (processor is not null)
+            {
+                await processor.StopProcessingAsync();
+            }
         }
     }
 }

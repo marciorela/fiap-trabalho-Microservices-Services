@@ -14,10 +14,6 @@ namespace Messages.Service.Messages
 {
     public class MessageNewOrder : Message
     {
-        public MessageNewOrder(string storeName) : base(storeName)
-        {
-        }
-
         protected override void Configure()
         {
             _topicName = "NewOrder";
