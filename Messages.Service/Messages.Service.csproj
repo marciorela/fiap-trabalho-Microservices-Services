@@ -16,8 +16,4 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Geekburger.Order\Geekburger.Order.Data\Geekburger.Order.Data.csproj" />
-  </ItemGroup>
-
 </Project>
